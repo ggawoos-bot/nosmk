@@ -159,9 +159,7 @@
             <button class="btn btn-blue" id="newBtn">신규</button>
             <button class="btn btn-blue" id="searchBtn">조회</button>
             <button class="btn btn-blue" id="saveBtn">저장</button>
-            <button class="btn btn-blue" id="cancelBtn">취소</button>
             <button class="btn btn-blue" id="excelBtn">엑셀</button>
-            <button class="btn btn-blue" id="closeBtn">닫기</button>
         </div>
     </div>
 
@@ -488,7 +486,6 @@
             </div>
         </div>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             // 초기 메시지 팝업 관련 요소
@@ -503,6 +500,7 @@
             const userListGrid = document.getElementById('userListGrid');
             const userNameInput = document.getElementById('userNameInput');
             const userGroupFilterSelect = document.getElementById('userGroupFilterSelect');
+            const excelBtn = document.getElementById('excelBtn'); // 추가된 엑셀 버튼 요소
 
             // 상세 정보 및 추가 정보 관련 요소
             const detailUserIdInput = document.getElementById('detailUserIdInput');
@@ -532,194 +530,157 @@
             const serviceCareerSelect = document.getElementById('serviceCareerSelect');
             const counselingStartDateInput = document.getElementById('counselingStartDateInput');
             const educationSelect = document.getElementById('educationSelect');
+            const fileUploadContainer = document.getElementById('fileUploadContainer');
             const phoneInput = document.getElementById('phoneInput');
             const emailInput = document.getElementById('emailInput');
-            const fileUploadContainer = document.getElementById('fileUploadContainer');
 
-            // 가상 테스트 데이터
+            // 테스트 데이터 (임시 데이터)
             const testUsers = [
-                { id: 'user_01', name: '김민준', org: '용산구보건소', group: '시스템관리', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '1234-5678', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_02', name: '이서연', org: '성동구보건소', group: '업무담당자', accountType: '조직', dormant: false, business: '학교흡연예방사업', ipin: '', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_03', name: '박서준', org: '강남구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '2345-6789', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1985-05-20', position: '상담사', degree: '대졸', major: '상담학', license: '상담심리사 2급', serviceCareer: '상담전화', counselingStart: '2022-01-10', education: '기본', phone: '010-9876-5432', email: 'park.sj@example.com' },
-                { id: 'user_04', name: '최지우', org: '은평구보건소', group: '금연지도원', accountType: '개인', dormant: false, business: '담배마케팅 모니터링', ipin: '3456-7890', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_05', name: '김민지', org: '마포구보건소', group: '금연상담사+금연지도원', accountType: '개인', dormant: false, business: '금연치료 건강보험 지원사업', ipin: '4567-8901', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '24', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1992-11-03', position: '주무관', degree: '대졸', major: '간호학', license: '국가공인자격증', serviceCareer: '보건소', counselingStart: '2021-07-01', education: '심화', phone: '010-1111-2222', email: 'kim.mj2@example.com' },
-                { id: 'user_06', name: '박하은', org: '강서구보건소', group: '업무담당자', accountType: '개인', dormant: false, business: '금연상담전화', ipin: '5678-9012', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_07', name: '이도윤', org: '노원구보건소', group: '금연상담사', accountType: '조직', dormant: false, business: '찾아가는 금연서비스', ipin: '6789-0123', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '60', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1978-08-25', position: '팀장', degree: '대학원석사졸', major: '보건학', license: '보건교사 자격증', serviceCareer: '찾금', counselingStart: '2018-05-15', education: '심화', phone: '010-3333-4444', email: 'lee.dy@example.com' },
-                { id: 'user_08', name: '정수아', org: '동작구보건소', group: '금연지도원', accountType: '개인', dormant: false, business: '군의경 금연사업', ipin: '7890-1234', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_09', name: '한지민', org: '서초구보건소', group: '금연상담사+금연지도원', accountType: '개인', dormant: false, business: '단기금연캠프', ipin: '8901-2345', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1995-02-14', position: '전문가', degree: '고졸', major: '기타', license: '컴퓨터활용능력 1급', serviceCareer: '금연캠프', counselingStart: '2023-09-01', education: '기타(이수증 업로드)', phone: '010-5555-6666', email: 'han.jm@example.com' },
-                { id: 'user_10', name: '오세훈', org: '중구보건소', group: '시도 담당자', accountType: '조직', dormant: false, business: '금연치료 건강보험 지원사업', ipin: '9012-3456', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_11', name: '이지아', org: '종로구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '9013-4567', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '12', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1988-07-22', position: '상담사', degree: '대졸', major: '상담학', license: '직업상담사 2급', serviceCareer: '상담전화', counselingStart: '2021-03-01', education: '기본', phone: '010-7777-8888', email: 'lee.ja@example.com' },
-                { id: 'user_12', name: '김태호', org: '강북구보건소', group: '금연지도원', accountType: '개인', dormant: false, business: '담배마케팅 모니터링', ipin: '9014-5678', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_13', name: '박지은', org: '도봉구보건소', group: '금연상담사+금연지도원', accountType: '개인', dormant: false, business: '학교흡연예방사업', ipin: '9015-6789', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1998-04-12', position: '사원', degree: '고졸', major: '기타', license: '운전면허증', serviceCareer: '학교', counselingStart: '2024-01-01', education: '기타(이수증 업로드)', phone: '010-9999-0000', email: 'park.je@example.com' },
-                { id: 'user_14', name: '장동건', org: '광진구보건소', group: '금연상담사', accountType: '조직', dormant: false, business: '찾아가는 금연서비스', ipin: '9016-7890', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '36', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1980-09-03', position: '과장', degree: '대학원석사졸', major: '의학', license: '의사면허', serviceCareer: '찾금', counselingStart: '2019-06-20', education: '심화', phone: '010-2222-3333', email: 'jang.dg@example.com' },
-                { id: 'user_15', name: '최윤아', org: '성북구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '군의경 금연사업', ipin: '9017-8901', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1996-10-28', position: '상담사', degree: '대졸', major: '심리학', license: '임상심리사 2급', serviceCareer: '군의경', counselingStart: '2023-11-15', education: '기본', phone: '010-4444-5555', email: 'choi.ya@example.com' },
-                { id: 'user_16', name: '홍길동', org: '용산구보건소', group: '시스템관리', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '1111-2222', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_17', name: '고은별', org: '마포구보건소', group: '사업운영자', accountType: '조직', dormant: false, business: '단기금연캠프', ipin: '1111-3333', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_18', name: '신민아', org: '강남구보건소', group: '시도 담당자', accountType: '개인', dormant: false, business: '금연치료 건강보험 지원사업', ipin: '1111-4444', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_19', name: '이민호', org: '은평구보건소', group: '업무담당자', accountType: '조직', dormant: false, business: '찾아가는 금연서비스', ipin: '1111-5555', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_20', name: '김수현', org: '노원구보건소', group: '금연조사원', accountType: '개인', dormant: false, business: '담배마케팅 모니터링', ipin: '1111-6666', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_21', name: '정해인', org: '서초구보건소', group: '학교선생님', accountType: '개인', dormant: false, business: '학교흡연예방사업', ipin: '1111-7777', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_22', name: '손예진', org: '중구보건소', group: '유지보수 담당자', accountType: '조직', dormant: false, business: '군의경 금연사업', ipin: '1111-8888', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_23', name: '송혜교', org: '마포구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '9018-9012', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '18', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1981-02-28', position: '상담사', degree: '대졸', major: '보건학', license: '간호사 면허', serviceCareer: '보건소', counselingStart: '2020-09-01', education: '기본', phone: '010-6666-7777', email: 'song.hk@example.com' },
-                { id: 'user_24', name: '현빈', org: '강남구보건소', group: '금연상담사+금연지도원', accountType: '개인', dormant: false, business: '금연치료 건강보험 지원사업', ipin: '9019-0123', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1982-09-25', position: '팀원', degree: '대학원석사졸', major: '상담학', license: '상담심리사 1급', serviceCareer: '병의원', counselingStart: '2023-01-20', education: '기타(이수증 업로드)', phone: '010-8888-9999', email: 'hyun.b@example.com' },
-                { id: 'user_25', name: '김소현', org: '용산구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '금연상담전화', ipin: '9020-1234', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '48', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1999-06-04', position: '상담사', degree: '대졸', major: '심리학', license: '국가전문자격', serviceCareer: '상담전화', counselingStart: '2019-05-01', education: '심화', phone: '010-1234-9876', email: 'kim.sh@example.com' },
-                { id: 'user_26', name: '남주혁', org: '성동구보건소', group: '금연지도원', accountType: '개인', dormant: false, business: '담배마케팅 모니터링', ipin: '9021-2345', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
-                { id: 'user_27', name: '이종석', org: '강서구보건소', group: '금연상담사', accountType: '조직', dormant: false, business: '군의경 금연사업', ipin: '9022-3456', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '24', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1989-09-14', position: '주무관', degree: '대학원석사졸', major: '보건학', license: '보건관리사', serviceCareer: '군의경', counselingStart: '2020-11-01', education: '기본', phone: '010-4321-8765', email: 'lee.js@example.com' },
-                { id: 'user_28', name: '박보검', org: '노원구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '찾아가는 금연서비스', ipin: '9023-4567', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1993-01-20', position: '상담사', degree: '대졸', major: '교육학', license: '교사 자격증', serviceCareer: '찾금', counselingStart: '2024-03-01', education: '기본', phone: '010-5555-4444', email: 'park.bg@example.com' },
-                { id: 'user_29', name: '윤아', org: '동작구보건소', group: '금연상담사+금연지도원', accountType: '개인', dormant: false, business: '단기금연캠프', ipin: '9024-5678', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '30', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1990-05-30', position: '팀원', degree: '대졸', major: '간호학', license: '간호사 면허', serviceCareer: '금연캠프', counselingStart: '2021-02-15', education: '심화', phone: '010-3210-9876', email: 'yoona@example.com' },
-                { id: 'user_30', name: '김우빈', org: '서초구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '9025-6789', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1989-07-16', position: '상담사', degree: '대졸', major: '의학', license: '의사면허', serviceCareer: '보건소', counselingStart: '2024-05-10', education: '기본', phone: '010-1111-0000', email: 'kim.wb@example.com' }
+                { id: 'user01', name: '홍길동', organization: '보건소', group: '업무담당자', accountType: '개인', businessDivision: '보건소 금연클리닉', ipinId: '1234-5678', employmentType: '정규직', jobTitle: '주무관', gender: '남성', careerType: '신규', career: '6', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2023-01-01', endDate: '2024-12-31' },
+                { id: 'user02', name: '김철수', organization: '보건소', group: '금연상담사', accountType: '개인', businessDivision: '보건소 금연클리닉', ipinId: '9101-1213', employmentType: '계약직', jobTitle: '상담사', gender: '남성', careerType: '경력', career: '12', continuousEmployment: '아니오', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2022-05-01', endDate: '2023-04-30', dob: '1990-03-15', position: '선임 상담사', finalDegree: '대졸', majorField: '상담학', counselingLicense: '상담사 2급', serviceCareer: '보건소', counselingStartDate: '2020-01-01', education: '기본', phone: '010-1234-5678', email: 'kimcs@example.com' },
+                { id: 'user03', name: '이영희', organization: '보건소', group: '금연지도원', accountType: '조직', businessDivision: '군의경 금연사업', ipinId: '1415-1617', employmentType: '정규직', jobTitle: '지도원', gender: '여성', careerType: '신규', career: '3', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2024-02-01', endDate: '2025-01-31' },
+                { id: 'user04', name: '박민준', organization: '병원', group: '금연상담사+금연지도원', accountType: '개인', businessDivision: '단기금연캠프', ipinId: '1819-2021', employmentType: '계약직', jobTitle: '상담/지도원', gender: '남성', careerType: '경력', career: '24', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2021-08-01', endDate: '2024-07-31', dob: '1985-10-20', position: '총괄 책임자', finalDegree: '대학원석사졸', majorField: '의학', counselingLicense: '의사 면허', serviceCareer: '금연캠프', counselingStartDate: '2019-03-01', education: '심화', phone: '010-9876-5432', email: 'parkmj@example.com' },
+                { id: 'user05', name: '최지훈', organization: '학교', group: '학교선생님', accountType: '조직', businessDivision: '학교흡연예방사업', ipinId: '2223-2425', employmentType: '정규직', jobTitle: '선생님', gender: '남성', careerType: '신규', career: '1', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2024-03-01', endDate: '2025-02-28' },
+                { id: 'user06', name: '정하나', organization: '보건소', group: '업무담당자', accountType: '개인', businessDivision: '보건소 금연클리닉', ipinId: '2627-2829', employmentType: '정규직', jobTitle: '주무관', gender: '여성', careerType: '경력', career: '36', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2020-05-10', endDate: '2025-05-09' },
+                { id: 'user07', name: '강서준', organization: '보건소', group: '금연상담사', accountType: '개인', businessDivision: '보건소 금연클리닉', ipinId: '3031-3233', employmentType: '계약직', jobTitle: '상담사', gender: '남성', careerType: '신규', career: '2', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2024-01-01', endDate: '2025-12-31', dob: '1995-07-22', position: '상담사', finalDegree: '대졸', majorField: '간호학', counselingLicense: '간호사 면허', serviceCareer: '상담전화', counselingStartDate: '2024-01-01', education: '기초', phone: '010-2345-6789', email: 'kangsy@example.com' },
+                { id: 'user08', name: '윤지민', organization: '병원', group: '업무담당자', accountType: '조직', businessDivision: '금연치료 건강보험 지원사업', ipinId: '3435-3637', employmentType: '정규직', jobTitle: '코디네이터', gender: '여성', careerType: '경력', career: '48', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2019-09-01', endDate: '2024-08-31' },
+                { id: 'user09', name: '장동건', organization: '보건소', group: '금연지도원', accountType: '개인', businessDivision: '찾아가는 금연서비스', ipinId: '3839-4041', employmentType: '계약직', jobTitle: '지도원', gender: '남성', careerType: '신규', career: '1', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2024-04-01', endDate: '2025-03-31' },
+                { id: 'user10', name: '송혜교', organization: '금연상담전화센터', group: '금연상담사', accountType: '개인', businessDivision: '금연상담전화', ipinId: '4243-4445', employmentType: '정규직', jobTitle: '상담사', gender: '여성', careerType: '경력', career: '60', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2018-06-01', endDate: '2024-05-31', dob: '1980-11-25', position: '책임 상담사', finalDegree: '대학원석사졸', majorField: '심리학', counselingLicense: '임상심리사', serviceCareer: '상담전화', counselingStartDate: '2018-06-01', education: '심화', phone: '010-3456-7890', email: 'shg@example.com' },
+                { id: 'user11', name: '이민호', organization: '보건소', group: '금연조사원', accountType: '조직', businessDivision: '담배마케팅 모니터링', ipinId: '4647-4849', employmentType: '계약직', jobTitle: '조사원', gender: '남성', careerType: '신규', career: '0', continuousEmployment: '아니오', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2024-05-01', endDate: '2024-10-31' },
+                { id: 'user12', name: '전지현', organization: '학교', group: '학교선생님', accountType: '개인', businessDivision: '학교흡연예방사업', ipinId: '5051-5253', employmentType: '정규직', jobTitle: '선생님', gender: '여성', careerType: '경력', career: '120', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2014-03-01', endDate: '2025-02-28' },
+                { id: 'user13', name: '김태희', organization: '보건소', group: '금연상담사', accountType: '개인', businessDivision: '보건소 금연클리닉', ipinId: '5455-5657', employmentType: '정규직', jobTitle: '상담사', gender: '여성', careerType: '경력', career: '18', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2023-08-01', endDate: '2024-07-31', dob: '1988-09-09', position: '상담사', finalDegree: '대졸', majorField: '교육학', counselingLicense: '평생교육사', serviceCareer: '보건소', counselingStartDate: '2023-08-01', education: '기본', phone: '010-4567-8901', email: 'kth@example.com' },
+                { id: 'user14', name: '이병헌', organization: '찾아가는 금연서비스', group: '업무담당자', accountType: '조직', businessDivision: '찾아가는 금연서비스', ipinId: '5859-6061', employmentType: '계약직', jobTitle: '담당자', gender: '남성', careerType: '경력', career: '72', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2018-01-01', endDate: '2024-12-31' },
+                { id: 'user15', name: '손예진', organization: '보건소', group: '금연상담사+금연지도원', accountType: '개인', businessDivision: '보건소 금연클리닉', ipinId: '6263-6465', employmentType: '정규직', jobTitle: '상담/지도원', gender: '여성', careerType: '경력', career: '48', continuousEmployment: '예', termsAgreement: '동의', usageStatus: '사용', reason: '', startDate: '2020-03-01', endDate: '2025-02-28', dob: '1982-01-22', position: '총괄 상담사', finalDegree: '대학원석사졸', majorField: '보건학', counselingLicense: '보건교육사', serviceCareer: '보건소', counselingStartDate: '2020-03-01', education: '기타(이수증 업로드)', phone: '010-5678-9012', email: 'syj@example.com' }
             ];
 
-            // 팝업 로직
-            if (localStorage.getItem(storageKey) !== 'false') {
-                modal.style.display = 'flex';
-            } else {
-                modal.style.display = 'none';
-            }
-
-            closeModalBtn.addEventListener('click', () => {
-                modal.style.display = 'none';
-                if (doNotShowAgainCheckbox.checked) {
-                    localStorage.setItem(storageKey, 'false');
-                }
-            });
-
-            // 기능 구현 함수
-            function renderUserList(users) {
-                // 기존 리스트 초기화 (헤더 제외)
-                const existingRows = userListGrid.querySelectorAll('.user-row');
-                existingRows.forEach(row => row.remove());
+            // 렌더링 함수
+            const renderUserList = (users) => {
+                userListGrid.innerHTML = '';
+                const header = document.createElement('div');
+                header.className = 'grid grid-cols-4 text-xs font-bold text-gray-700 p-2 border-b border-gray-300';
+                header.innerHTML = `<div>사용자ID</div><div>이름</div><div>조직명</div><div>사용자그룹</div>`;
+                userListGrid.appendChild(header);
 
                 users.forEach(user => {
                     const row = document.createElement('div');
-                    row.className = 'user-row grid grid-cols-4 text-xs p-2 border-b border-gray-100';
+                    row.className = 'user-row grid grid-cols-4 text-xs p-2 border-b border-gray-200 hover:bg-gray-100';
                     row.dataset.userId = user.id;
-
                     row.innerHTML = `
                         <div>${user.id}</div>
                         <div>${user.name}</div>
-                        <div>${user.org}</div>
+                        <div>${user.organization}</div>
                         <div>${user.group}</div>
                     `;
                     userListGrid.appendChild(row);
-
-                    // 리스트 항목 클릭 시 상세 정보 표시
-                    row.addEventListener('click', () => {
-                        // 모든 행의 선택 효과를 제거
-                        document.querySelectorAll('.user-row').forEach(r => r.classList.remove('selected'));
-                        // 클릭한 행에 선택 효과 추가
-                        row.classList.add('selected');
-                        displayUserDetails(user);
-                    });
                 });
-            }
+            };
 
-            function displayUserDetails(user) {
-                // 사용자 상세 정보 필드에 데이터 채우기
-                detailUserIdInput.value = user.id;
-                detailUserNameInput.value = user.name;
+            // 사용자 상세 정보 표시 함수
+            const displayUserDetails = (user) => {
+                detailUserIdInput.value = user.id || '';
+                detailUserNameInput.value = user.name || '';
                 accountTypeSelect.value = user.accountType || '선택';
-                businessDivisionSelect.value = user.business || '선택';
-                ipinIdInput.value = user.ipin || '';
-                orgNameInput.value = user.org || '';
-                employmentTypeSelect.value = user.employment || '선택';
+                businessDivisionSelect.value = user.businessDivision || '선택';
+                ipinIdInput.value = user.ipinId || '';
+                orgNameInput.value = user.organization || '';
+                employmentTypeSelect.value = user.employmentType || '선택';
                 userGroupSelect.value = user.group || '선택';
-                jobTitleSelect.value = user.job || '선택';
+                jobTitleSelect.value = user.jobTitle || '선택';
                 genderSelect.value = user.gender || '선택';
                 careerTypeSelect.value = user.careerType || '선택';
                 careerInput.value = user.career || '';
-                continuousEmploymentSelect.value = user.continuous || '선택';
-                termsAgreementSelect.value = user.terms || '미동의';
-                usageStatusSelect.value = user.status || '선택';
+                continuousEmploymentSelect.value = user.continuousEmployment || '선택';
+                termsAgreementSelect.value = user.termsAgreement || '미동의';
+                usageStatusSelect.value = user.usageStatus || '선택';
                 reasonInput.value = user.reason || '';
-                startDateInput.value = user.start || '';
-                endDateInput.value = user.end || '';
+                startDateInput.value = user.startDate || '';
+                endDateInput.value = user.endDate || '';
+
+                // 추가 정보 섹션
+                dobInput.value = user.dob || '';
+                positionInput.value = user.position || '';
+                finalDegreeSelect.value = user.finalDegree || '선택';
+                majorFieldSelect.value = user.majorField || '선택';
+                counselingLicenseInput.value = user.counselingLicense || '';
+                serviceCareerSelect.value = user.serviceCareer || '선택';
+                counselingStartDateInput.value = user.counselingStartDate || '';
+                educationSelect.value = user.education || '선택';
+                phoneInput.value = user.phone || '';
+                emailInput.value = user.email || '';
                 
-                // '사용자(금연상담사) 추가정보' 영역 표시/숨기기
+                // 사용자그룹에 따른 추가 정보 섹션 표시/숨김
                 if (user.group === '금연상담사' || user.group === '금연상담사+금연지도원') {
                     additionalInfoSection.classList.remove('hidden-section');
-                    // 추가 정보 필드에 데이터 채우기
-                    dobInput.value = user.dob || '';
-                    positionInput.value = user.position || '';
-                    finalDegreeSelect.value = user.degree || '선택';
-                    majorFieldSelect.value = user.major || '선택';
-                    counselingLicenseInput.value = user.license || '';
-                    serviceCareerSelect.value = user.serviceCareer || '선택';
-                    counselingStartDateInput.value = user.counselingStart || '';
-                    educationSelect.value = user.education || '선택';
-                    phoneInput.value = user.phone || '';
-                    emailInput.value = user.email || '';
-                    
-                    // 교육 이수 여부가 '기타'인 경우 파일 업로드 영역 표시
-                    if (user.education === '기타(이수증 업로드)') {
-                        fileUploadContainer.classList.remove('hidden-section');
-                    } else {
-                        fileUploadContainer.classList.add('hidden-section');
-                    }
                 } else {
                     additionalInfoSection.classList.add('hidden-section');
                 }
-            }
-
-            function clearUserDetails() {
-                // 모든 상세 정보 필드를 초기 값으로 초기화
-                detailUserIdInput.value = '';
-                detailUserNameInput.value = '';
-                accountTypeSelect.value = '선택';
-                businessDivisionSelect.value = '선택';
-                ipinIdInput.value = '';
-                orgNameInput.value = '';
-                employmentTypeSelect.value = '선택';
-                userGroupSelect.value = '선택';
-                jobTitleSelect.value = '선택';
-                genderSelect.value = '선택';
-                careerTypeSelect.value = '선택';
-                careerInput.value = '';
-                continuousEmploymentSelect.value = '선택';
-                termsAgreementSelect.value = '미동의';
-                usageStatusSelect.value = '선택';
-                reasonInput.value = '';
-                startDateInput.value = '';
-                endDateInput.value = '';
-
-                // 추가 정보 필드 초기화
-                dobInput.value = '';
-                positionInput.value = '';
-                finalDegreeSelect.value = '선택';
-                majorFieldSelect.value = '선택';
-                counselingLicenseInput.value = '';
-                serviceCareerSelect.value = '선택';
-                counselingStartDateInput.value = '';
-                educationSelect.value = '선택';
-                phoneInput.value = '';
-                emailInput.value = '';
-                
-                // 추가 정보 섹션 숨기기
+            };
+            
+            // 상세 정보 초기화 함수
+            const clearUserDetails = () => {
+                const allInputs = document.querySelectorAll('.form-input');
+                allInputs.forEach(input => {
+                    if (input.tagName === 'SELECT') {
+                        input.value = input.options[0].value;
+                    } else {
+                        input.value = '';
+                    }
+                });
+                // 상세 정보 섹션 숨김
                 additionalInfoSection.classList.add('hidden-section');
-                fileUploadContainer.classList.add('hidden-section');
-
-                // 리스트의 선택 효과 제거
-                document.querySelectorAll('.user-row').forEach(row => row.classList.remove('selected'));
+                // 모든 행의 선택 상태 해제
+                const allRows = document.querySelectorAll('.user-row');
+                allRows.forEach(row => row.classList.remove('selected'));
+            };
+            
+            // 초기 메시지 팝업 처리
+            if (localStorage.getItem(storageKey) !== 'false') {
+                modal.style.display = 'flex';
             }
+            closeModalBtn.addEventListener('click', () => {
+                if (doNotShowAgainCheckbox.checked) {
+                    localStorage.setItem(storageKey, 'false');
+                }
+                modal.style.display = 'none';
+            });
+            
+            // 사용자 목록 클릭 이벤트 리스너
+            userListGrid.addEventListener('click', (e) => {
+                const row = e.target.closest('.user-row');
+                if (row) {
+                    const userId = row.dataset.userId;
+                    const selectedUser = testUsers.find(user => user.id === userId);
+                    
+                    // 모든 행의 선택 상태 초기화
+                    const allRows = document.querySelectorAll('.user-row');
+                    allRows.forEach(r => r.classList.remove('selected'));
+                    
+                    // 현재 클릭된 행에 선택 상태 적용
+                    row.classList.add('selected');
+                    
+                    displayUserDetails(selectedUser);
+                }
+            });
+            
+            // '신규' 버튼 클릭 이벤트 리스너
+            newBtn.addEventListener('click', () => {
+                clearUserDetails();
+            });
 
-            // '조회' 버튼 클릭 이벤트 리스너
+            // '조회' 버튼 클릭 이벤트 리스너 (필터링 기능)
             searchBtn.addEventListener('click', () => {
-                const userName = userNameInput.value.trim().toLowerCase();
+                const userName = userNameInput.value.toLowerCase();
                 const userGroup = userGroupFilterSelect.value;
-                let filteredUsers = testUsers;
-
-                // 사용자명 필터링
-                if (userName !== '') {
-                    filteredUsers = filteredUsers.filter(user => user.name.toLowerCase().includes(userName));
-                }
-
-                // 사용자 그룹 필터링
-                if (userGroup !== '전체') {
-                    filteredUsers = filteredUsers.filter(user => user.group === userGroup);
-                }
-
+                
+                const filteredUsers = testUsers.filter(user => {
+                    const nameMatch = user.name.toLowerCase().includes(userName);
+                    const groupMatch = userGroup === '전체' || user.group === userGroup;
+                    return nameMatch && groupMatch;
+                });
+                
                 renderUserList(filteredUsers);
-                // 필터링 후 첫 번째 사용자 선택 (선택 사항)
+                
+                // 필터링 후 첫 번째 사용자 정보 표시
                 if (filteredUsers.length > 0) {
                     displayUserDetails(filteredUsers[0]);
                     userListGrid.querySelector('.user-row').classList.add('selected');
@@ -729,9 +690,71 @@
                 }
             });
             
-            // '신규' 버튼 클릭 이벤트 리스너
-            newBtn.addEventListener('click', () => {
-                clearUserDetails();
+            // '엑셀' 버튼 클릭 이벤트 리스너 (추가된 기능)
+            excelBtn.addEventListener('click', () => {
+                // CSV 헤더를 동적으로 생성합니다.
+                const userHeaders = ['사용자ID', '이름', '조직명', '사용자그룹'];
+                const detailHeaders = ['계정유형', '업무구분', '사용자ID', 'I-PIN ID', '조직명', '고용형태', '사용자그룹', '직급', '성별', '신규/경력', '경력', '지속고용', '약관동의', '사용유무', '사유', '사용시작일', '사용종료일'];
+                const additionalHeaders = ['생년월일', '직위/직급', '최종학위', '전공분야', '상담 관련 자격증 보유 여부', '서비스 상담 경력', '상담업무 시작일', '교육 이수 여부', '전화번호', '이메일'];
+
+                const allHeaders = [...userHeaders, ...detailHeaders, ...additionalHeaders];
+                
+                const dataToExport = testUsers.map(user => {
+                    const row = [
+                        user.id || '',
+                        user.name || '',
+                        user.organization || '',
+                        user.group || '',
+                        user.accountType || '',
+                        user.businessDivision || '',
+                        user.id || '', // 사용자ID 중복
+                        user.ipinId || '',
+                        user.organization || '', // 조직명 중복
+                        user.employmentType || '',
+                        user.group || '', // 사용자그룹 중복
+                        user.jobTitle || '',
+                        user.gender || '',
+                        user.careerType || '',
+                        user.career || '',
+                        user.continuousEmployment || '',
+                        user.termsAgreement || '',
+                        user.usageStatus || '',
+                        user.reason || '',
+                        user.startDate || '',
+                        user.endDate || '',
+                        user.dob || '',
+                        user.position || '',
+                        user.finalDegree || '',
+                        user.majorField || '',
+                        user.counselingLicense || '',
+                        user.serviceCareer || '',
+                        user.counselingStartDate || '',
+                        user.education || '',
+                        user.phone || '',
+                        user.email || ''
+                    ];
+                    // CSV에서 콤마(,)가 포함된 값은 큰따옴표로 감싸야 합니다.
+                    return row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',');
+                });
+
+                // CSV 형식으로 데이터를 조합합니다.
+                const csvContent = [
+                    allHeaders.map(header => `"${header}"`).join(','),
+                    ...dataToExport
+                ].join('\n');
+                
+                // UTF-8 BOM을 추가하여 한글 깨짐을 방지합니다.
+                const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                
+                // 가상의 링크를 생성하여 클릭 이벤트를 발생시킵니다.
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'users_all_data.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             });
 
             // 사용자그룹 상세 정보 콤보박스 변경 이벤트 (추가 정보 영역 표시/숨기기)
