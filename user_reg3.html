@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사용자 등록/관리</title>
+    <!-- Tailwind CSS CDN을 사용하여 스타일링을 적용합니다. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header-bar {
+            background-color: #e5e7eb;
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid #d1d5db;
+        }
+        .header-bar span {
+            font-weight: 500;
+        }
+        .btn {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .btn-blue {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-blue:hover {
+            background-color: #2563eb;
+        }
+        .btn-gray {
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+        .btn-gray:hover {
+            background-color: #d1d5db;
+        }
+        .form-input {
+            width: 100%;
+            border-radius: 0.375rem;
+            border: 1px solid #d1d5db;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        .grid-header {
+            background-color: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+        }
+        .form-section {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: white;
+        }
+        /* 라벨 텍스트 크기 조정을 위한 새로운 클래스 */
+        .form-label {
+            font-size: 0.75rem;
+        }
+        /* 날짜 입력 아이콘을 위한 스타일 */
+        .date-input-container {
+            position: relative;
+            width: 100%;
+        }
+        .date-input-container input[type="date"] {
+            padding-right: 2rem;
+        }
+        .date-input-container::after {
+            content: "📅";
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #4b5563;
+        }
+        /* 사용자그룹 라벨을 빨간색으로 변경하는 클래스 */
+        .user-group-label {
+            color: #ef4444;
+        }
+        /* 추가정보 섹션을 숨기기 위한 클래스 */
+        .hidden-section {
+            display: none;
+        }
+        /* 그리드 테이블 행 스타일 */
+        .user-row {
+            cursor: pointer;
+        }
+        .user-row:hover {
+            background-color: #f3f4f6;
+        }
+        .user-row.selected {
+            background-color: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+        }
+
+        /* 팝업 모달 스타일 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        /* 검토의견 섹션 스타일 */
+        .review-section {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: white;
+            margin-top: 1rem;
+        }
+        .comment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .comment-item:last-child {
+            border-bottom: none;
+        }
+        .delete-btn {
+            background-color: #ef4444;
+            color: white;
+            padding: 0.1rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            transition: background-color 0.2s;
+        }
+        .delete-btn:hover {
+            background-color: #dc2626;
+        }
+    </style>
+    <!-- Firebase SDK를 추가합니다. -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-100 p-4">
+
+    <!-- 초기 메시지 팝업 모달 -->
+    <div id="initialMessageModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4">사이트 안내</h2>
+            <p class="text-gray-700 mb-4">
+                본 사이트는 화면 구성여부를 판단하기 위한 가상 사이트입니다.<br>
+                사용자그룹(붉은색)을 변경하면 사용자 추가정보를 입력할 수 있습니다.
+            </p>
+            <div class="flex items-center justify-center mb-4 text-sm">
+                <input type="checkbox" id="doNotShowAgain" class="mr-2">
+                <label for="doNotShowAgain">앞으로 보이지 않기</label>
+            </div>
+            <button id="closeModalBtn" class="btn btn-blue w-full">닫기</button>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <div class="header-bar flex items-center justify-between rounded-t-lg">
+        <div class="flex items-center space-x-2 text-sm">
+            <span>사업자 등록 > 사용자 등록/관리</span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button class="btn btn-blue" id="newBtn">신규</button>
+            <button class="btn btn-blue" id="searchBtn">조회</button>
+            <button class="btn btn-blue" id="saveBtn">저장</button>
+            <button class="btn btn-blue" id="cancelBtn">취소</button>
+            <button class="btn btn-blue" id="excelBtn">엑셀</button>
+            <button class="btn btn-blue" id="closeBtn">닫기</button>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="container p-4 bg-white rounded-b-lg shadow-lg">
+        <!-- Top Filters Section -->
+        <div class="flex items-center space-x-4 mb-4 text-sm">
+            <div class="flex items-center space-x-2">
+                <span class="form-label">기관유형</span>
+                <select class="form-input w-28" id="agencyTypeSelect">
+                    <option>보건소</option>
+                </select>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="form-label">지역</span>
+                <select class="form-input w-28" id="regionSelect">
+                    <option>서울특</option>
+                </select>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="form-label">기관</span>
+                <select class="form-input w-28" id="agencySelect">
+                    <option>전체</option>
+                </select>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="form-label">사용자명</span>
+                <input type="text" class="form-input w-28" id="userNameInput">
+            </div>
+            <div class="flex items-center space-x-2">
+                <!-- 사용자그룹 필터 콤보박스에 새로운 옵션을 적용합니다. -->
+                <span class="form-label">사용자그룹</span>
+                <select class="form-input w-28" id="userGroupFilterSelect">
+                    <option value="전체">전체</option>
+                    <option value="시스템관리">시스템관리</option>
+                    <option value="사업운영자">사업운영자</option>
+                    <option value="시도 담당자">시도 담당자</option>
+                    <option value="업무담당자">업무담당자</option>
+                    <option value="금연상담사">금연상담사</option>
+                    <option value="금연지도원">금연지도원</option>
+                    <option value="금연상담사+금연지도원">금연상담사+금연지도원</option>
+                    <option value="금연조사원">금연조사원</option>
+                    <option value="학교선생님">학교선생님</option>
+                    <option value="유지보수 담당자">유지보수 담당자</option>
+                </select>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="form-label">사용자유무</span>
+                <select class="form-input w-28" id="userStatusSelect">
+                    <option>전체</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="grid grid-cols-[1fr_1.15fr] md:grid-cols-[1fr_1.15fr] gap-4">
+            <!-- Left Column: User List Grid -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-bold text-lg">사용자 리스트</span>
+                    <div class="flex items-center text-sm space-x-2">
+                        <input type="checkbox" id="manage_target">
+                        <label for="manage_target">관리대상수</label>
+                        <button class="btn btn-gray">퇴사자 조회</button>
+                    </div>
+                </div>
+                <!-- 사용자 리스트를 표시할 영역 -->
+                <div id="userListGrid" class="bg-white p-2 border border-gray-300 rounded-md overflow-y-auto" style="height: 400px;">
+                    <!-- Table header -->
+                    <div class="grid grid-cols-4 text-xs font-bold text-gray-700 p-2 border-b border-gray-300">
+                        <div>사용자ID</div>
+                        <div>이름</div>
+                        <div>조직명</div>
+                        <div>사용자그룹</div>
+                    </div>
+                    <!-- 데이터가 동적으로 추가될 영역 -->
+                </div>
+                <!-- 검토의견 입력 영역 추가 -->
+                <div class="review-section mt-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-lg">검토의견 입력</span>
+                        <button id="addCommentBtn" class="btn btn-blue">추가</button>
+                    </div>
+                    <textarea id="commentInput" class="form-input mb-2" rows="3" placeholder="의견을 입력하세요..."></textarea>
+                    <div id="commentList" class="overflow-y-auto" style="max-height: 150px;">
+                        <!-- 댓글이 여기에 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: User Details and Registration Form -->
+            <div>
+                <!-- User Details Section -->
+                <div class="form-section mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-lg">사용자 상세정보</span>
+                        <div class="flex items-center text-red-500 text-sm">
+                            <span class="mr-1">※</span> 비밀번호 초기화
+                        </div>
+                    </div>
+                    <!-- Updated layout for user details to ensure labels are in one line -->
+                    <div class="grid grid-cols-2 gap-2 text-sm items-center">
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">계정유형</span>
+                            <select class="form-input w-3/4" id="accountTypeSelect">
+                                <option>선택</option>
+                                <option>개인</option>
+                                <option>조직</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">휴면계정</span>
+                            <div class="flex w-3/4 space-x-1">
+                                <button class="btn btn-gray" id="dormantBtn">해제</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">업무구분</span>
+                            <!-- 업무구분 콤보박스에 새로운 옵션을 적용합니다. -->
+                            <select class="form-input w-3/4" id="businessDivisionSelect">
+                                <option>선택</option>
+                                <option>보건소 금연클리닉</option>
+                                <option>군의경 금연사업</option>
+                                <option>단기금연캠프</option>
+                                <option>찾아가는 금연서비스</option>
+                                <option>학교흡연예방사업</option>
+                                <option>담배마케팅 모니터링</option>
+                                <option>금연상담전화</option>
+                                <option>금연치료 건강보험 지원사업</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">사용자명</span>
+                            <input type="text" class="form-input w-3/4" id="detailUserNameInput">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">사용자ID</span>
+                            <input type="text" class="form-input w-3/4" id="detailUserIdInput">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">I-PIN ID</span>
+                            <input type="text" class="form-input w-3/4" id="ipinIdInput">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">조직명</span>
+                            <input type="text" class="form-input w-3/4" id="orgNameInput">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">고용형태</span>
+                            <select class="form-input w-3/4" id="employmentTypeSelect">
+                                <option>선택</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <!-- 사용자그룹 상세정보 콤보박스에 새로운 옵션을 적용합니다. -->
+                            <span class="form-label text-right w-1/4 user-group-label">사용자그룹</span>
+                            <select id="userGroupSelect" class="form-input w-3/4">
+                                <option value="선택">선택</option>
+                                <option value="시스템관리">시스템관리</option>
+                                <option value="사업운영자">사업운영자</option>
+                                <option value="시도 담당자">시도 담당자</option>
+                                <option value="업무담당자">업무담당자</option>
+                                <option value="금연상담사">금연상담사</option>
+                                <option value="금연지도원">금연지도원</option>
+                                <option value="금연상담사+금연지도원">금연상담사+금연지도원</option>
+                                <option value="금연조사원">금연조사원</option>
+                                <option value="학교선생님">학교선생님</option>
+                                <option value="유지보수 담당자">유지보수 담당자</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">직급</span>
+                            <select class="form-input w-3/4" id="jobTitleSelect">
+                                <option>선택</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">성별</span>
+                            <select class="form-input w-3/4" id="genderSelect">
+                                <option>선택</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">신규/경력</span>
+                            <select class="form-input w-3/4" id="careerTypeSelect">
+                                <option>선택</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">경력</span>
+                            <input type="text" class="form-input w-1/2" id="careerInput">
+                            <span class="form-label">개월</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">지속고용</span>
+                            <select class="form-input w-3/4" id="continuousEmploymentSelect">
+                                <option>선택</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">약관동의</span>
+                            <select class="form-input w-3/4" id="termsAgreementSelect">
+                                <option>미동의</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">사용유무</span>
+                            <select class="form-input w-3/4" id="usageStatusSelect">
+                                <option>선택</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">사유</span>
+                            <input type="text" class="form-input w-3/4" id="reasonInput">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">사용시작일</span>
+                            <input type="text" class="form-input w-3/4" id="startDateInput">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">사용종료일</span>
+                            <input type="text" class="form-input w-3/4" id="endDateInput">
+                        </div>
+                        <div class="col-span-2 text-xs text-gray-500 mt-2">
+                            <span>- 는 전문인력 필수입력입니다.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 사용자(금연상담사) 추가정보 Section -->
+                <div id="additionalInfoSection" class="form-section mb-4 hidden-section">
+                    <span class="font-bold text-lg block mb-2">사용자(금연상담사) 추가정보</span>
+                    <div class="grid grid-cols-2 gap-2 text-sm items-center">
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">생년월일</span>
+                            <div class="date-input-container w-3/4">
+                                <input type="date" class="form-input" id="dobInput">
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">직위/직급</span>
+                            <input type="text" class="form-input w-3/4" id="positionInput">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">최종학위</span>
+                            <select class="form-input w-3/4" id="finalDegreeSelect">
+                                <option>선택</option>
+                                <option>고졸</option>
+                                <option>대졸</option>
+                                <option>대학원석사졸</option>
+                                <option>대학원박사졸</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">전공분야</span>
+                            <select class="form-input w-3/4" id="majorFieldSelect">
+                                <option>선택</option>
+                                <option>의학</option>
+                                <option>간호학</option>
+                                <option>보건학</option>
+                                <option>상담학</option>
+                                <option>심리학</option>
+                                <option>교육학</option>
+                                <option>기타</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">상담 관련 자격증<br>보유 여부</span>
+                            <input type="text" class="form-input w-3/4" id="counselingLicenseInput">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">서비스 상담 경력</span>
+                            <select class="form-input w-3/4" id="serviceCareerSelect">
+                                <option>선택</option>
+                                <option>상담전화</option>
+                                <option>보건소</option>
+                                <option>금연캠프</option>
+                                <option>찾금</option>
+                                <option>군의경</option>
+                                <option>병의원</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">상담업무 시작일</span>
+                            <div class="date-input-container w-3/4">
+                                <input type="date" class="form-input" id="counselingStartDateInput">
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">교육 이수 여부</span>
+                            <div class="flex w-3/4 space-x-2">
+                                <select id="educationSelect" class="form-input w-3/5">
+                                    <option>선택</option>
+                                    <option>기초</option>
+                                    <option>기본</option>
+                                    <option>심화</option>
+                                    <option>기타(이수증 업로드)</option>
+                                </select>
+                                <div id="fileUploadContainer" class="hidden-section flex-1">
+                                    <input type="file" class="form-input">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">전화번호</span>
+                            <input type="text" class="form-input w-3/4" id="phoneInput">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="form-label text-right w-1/4">이메일</span>
+                            <input type="email" class="form-input w-3/4" id="emailInput">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Management Target Section -->
+                <div class="form-section">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-lg">관리 대상자</span>
+                        <button class="btn btn-gray" id="changeCounselorBtn">상담사 변경</button>
+                    </div>
+                    <!-- Placeholder for management target list -->
+                    <div class="bg-white p-2 border border-gray-300 rounded-md" style="height: 200px;">
+                        <!-- Table header placeholder -->
+                        <div class="grid grid-cols-2 text-xs font-bold text-gray-700 p-2 border-b border-gray-300">
+                            <div>등록번호</div>
+                            <div>이름</div>
+                        </div>
+                        <!-- Table row placeholder -->
+                        <div class="grid grid-cols-2 text-xs p-2 hover:bg-gray-100">
+                            <div>123456789</div>
+                            <div>김영희</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Firebase 전역 변수 설정
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        let db;
+        let auth;
+        let userId = 'anonymous'; // 초기 사용자 ID, 인증 후 업데이트됩니다.
+
+        document.addEventListener('DOMContentLoaded', async (event) => {
+            // Firebase 초기화 및 인증
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Firebase 초기화 또는 인증 오류:", error);
+            }
+            
+            // 인증 상태 변화 감지 및 userId 설정
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Firebase 인증 성공. User ID:", userId);
+                    // Firebase 초기화 및 인증이 완료된 후 검토 의견 기능 시작
+                    initCommentsFeature();
+                } else {
+                    console.log("Firebase 인증 실패 또는 로그아웃. 익명으로 로그인.");
+                    userId = 'anonymous';
+                    initCommentsFeature();
+                }
+            });
+
+            // 초기 메시지 팝업 관련 요소
+            const modal = document.getElementById('initialMessageModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const doNotShowAgainCheckbox = document.getElementById('doNotShowAgain');
+            const storageKey = 'showInitialMessage';
+
+            // 필터 및 리스트 관련 요소
+            const newBtn = document.getElementById('newBtn');
+            const searchBtn = document.getElementById('searchBtn');
+            const userListGrid = document.getElementById('userListGrid');
+            const userNameInput = document.getElementById('userNameInput');
+            const userGroupFilterSelect = document.getElementById('userGroupFilterSelect');
+
+            // 상세 정보 및 추가 정보 관련 요소
+            const detailUserIdInput = document.getElementById('detailUserIdInput');
+            const detailUserNameInput = document.getElementById('detailUserNameInput');
+            const accountTypeSelect = document.getElementById('accountTypeSelect');
+            const businessDivisionSelect = document.getElementById('businessDivisionSelect');
+            const ipinIdInput = document.getElementById('ipinIdInput');
+            const orgNameInput = document.getElementById('orgNameInput');
+            const employmentTypeSelect = document.getElementById('employmentTypeSelect');
+            const userGroupSelect = document.getElementById('userGroupSelect');
+            const jobTitleSelect = document.getElementById('jobTitleSelect');
+            const genderSelect = document.getElementById('genderSelect');
+            const careerTypeSelect = document.getElementById('careerTypeSelect');
+            const careerInput = document.getElementById('careerInput');
+            const continuousEmploymentSelect = document.getElementById('continuousEmploymentSelect');
+            const termsAgreementSelect = document.getElementById('termsAgreementSelect');
+            const usageStatusSelect = document.getElementById('usageStatusSelect');
+            const reasonInput = document.getElementById('reasonInput');
+            const startDateInput = document.getElementById('startDateInput');
+            const endDateInput = document.getElementById('endDateInput');
+            const additionalInfoSection = document.getElementById('additionalInfoSection');
+            const dobInput = document.getElementById('dobInput');
+            const positionInput = document.getElementById('positionInput');
+            const finalDegreeSelect = document.getElementById('finalDegreeSelect');
+            const majorFieldSelect = document.getElementById('majorFieldSelect');
+            const counselingLicenseInput = document.getElementById('counselingLicenseInput');
+            const serviceCareerSelect = document.getElementById('serviceCareerSelect');
+            const counselingStartDateInput = document.getElementById('counselingStartDateInput');
+            const educationSelect = document.getElementById('educationSelect');
+            const phoneInput = document.getElementById('phoneInput');
+            const emailInput = document.getElementById('emailInput');
+            const fileUploadContainer = document.getElementById('fileUploadContainer');
+            
+            // 검토의견 관련 요소
+            const addCommentBtn = document.getElementById('addCommentBtn');
+            const commentInput = document.getElementById('commentInput');
+            const commentList = document.getElementById('commentList');
+
+            // 가상 테스트 데이터
+            const testUsers = [
+                { id: 'user_01', name: '김민준', org: '용산구보건소', group: '시스템관리', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '1234-5678', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_02', name: '이서연', org: '성동구보건소', group: '업무담당자', accountType: '조직', dormant: false, business: '학교흡연예방사업', ipin: '', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_03', name: '박서준', org: '강남구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '2345-6789', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1985-05-20', position: '상담사', degree: '대졸', major: '상담학', license: '상담심리사 2급', serviceCareer: '상담전화', counselingStart: '2022-01-10', education: '기본', phone: '010-9876-5432', email: 'park.sj@example.com' },
+                { id: 'user_04', name: '최지우', org: '은평구보건소', group: '금연지도원', accountType: '개인', dormant: false, business: '담배마케팅 모니터링', ipin: '3456-7890', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_05', name: '김민지', org: '마포구보건소', group: '금연상담사+금연지도원', accountType: '개인', dormant: false, business: '금연치료 건강보험 지원사업', ipin: '4567-8901', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '24', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1992-11-03', position: '주무관', degree: '대졸', major: '간호학', license: '국가공인자격증', serviceCareer: '보건소', counselingStart: '2021-07-01', education: '심화', phone: '010-1111-2222', email: 'kim.mj2@example.com' },
+                { id: 'user_06', name: '박하은', org: '강서구보건소', group: '업무담당자', accountType: '개인', dormant: false, business: '금연상담전화', ipin: '5678-9012', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_07', name: '이도윤', org: '노원구보건소', group: '금연상담사', accountType: '조직', dormant: false, business: '찾아가는 금연서비스', ipin: '6789-0123', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '60', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1978-08-25', position: '팀장', degree: '대학원석사졸', major: '보건학', license: '보건교사 자격증', serviceCareer: '찾금', counselingStart: '2018-05-15', education: '심화', phone: '010-3333-4444', email: 'lee.dy@example.com' },
+                { id: 'user_08', name: '정수아', org: '동작구보건소', group: '금연지도원', accountType: '개인', dormant: false, business: '군의경 금연사업', ipin: '7890-1234', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_09', name: '한지민', org: '서초구보건소', group: '금연상담사+금연지도원', accountType: '개인', dormant: false, business: '단기금연캠프', ipin: '8901-2345', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1995-02-14', position: '전문가', degree: '고졸', major: '기타', license: '컴퓨터활용능력 1급', serviceCareer: '금연캠프', counselingStart: '2023-09-01', education: '기타(이수증 업로드)', phone: '010-5555-6666', email: 'han.jm@example.com' },
+                { id: 'user_10', name: '오세훈', org: '중구보건소', group: '시도 담당자', accountType: '조직', dormant: false, business: '금연치료 건강보험 지원사업', ipin: '9012-3456', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_11', name: '이지아', org: '종로구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '9013-4567', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '12', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1988-07-22', position: '상담사', degree: '대졸', major: '상담학', license: '직업상담사 2급', serviceCareer: '상담전화', counselingStart: '2021-03-01', education: '기본', phone: '010-7777-8888', email: 'lee.ja@example.com' },
+                { id: 'user_12', name: '김태호', org: '강북구보건소', group: '금연지도원', accountType: '개인', dormant: false, business: '담배마케팅 모니터링', ipin: '9014-5678', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_13', name: '박지은', org: '도봉구보건소', group: '금연상담사+금연지도원', accountType: '개인', dormant: false, business: '학교흡연예방사업', ipin: '9015-6789', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1998-04-12', position: '사원', degree: '고졸', major: '기타', license: '운전면허증', serviceCareer: '학교', counselingStart: '2024-01-01', education: '기타(이수증 업로드)', phone: '010-9999-0000', email: 'park.je@example.com' },
+                { id: 'user_14', name: '장동건', org: '광진구보건소', group: '금연상담사', accountType: '조직', dormant: false, business: '찾아가는 금연서비스', ipin: '9016-7890', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '36', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1980-09-03', position: '과장', degree: '대학원석사졸', major: '의학', license: '의사면허', serviceCareer: '찾금', counselingStart: '2019-06-20', education: '심화', phone: '010-2222-3333', email: 'jang.dg@example.com' },
+                { id: 'user_15', name: '최윤아', org: '성북구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '군의경 금연사업', ipin: '9017-8901', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1996-10-28', position: '상담사', degree: '대졸', major: '심리학', license: '임상심리사 2급', serviceCareer: '군의경', counselingStart: '2023-11-15', education: '기본', phone: '010-4444-5555', email: 'choi.ya@example.com' },
+                { id: 'user_16', name: '홍길동', org: '용산구보건소', group: '시스템관리', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '1111-2222', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_17', name: '고은별', org: '마포구보건소', group: '사업운영자', accountType: '조직', dormant: false, business: '단기금연캠프', ipin: '1111-3333', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_18', name: '신민아', org: '강남구보건소', group: '시도 담당자', accountType: '개인', dormant: false, business: '금연치료 건강보험 지원사업', ipin: '1111-4444', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_19', name: '이민호', org: '은평구보건소', group: '업무담당자', accountType: '조직', dormant: false, business: '찾아가는 금연서비스', ipin: '1111-5555', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_20', name: '김수현', org: '노원구보건소', group: '금연조사원', accountType: '개인', dormant: false, business: '담배마케팅 모니터링', ipin: '1111-6666', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_21', name: '정해인', org: '서초구보건소', group: '학교선생님', accountType: '개인', dormant: false, business: '학교흡연예방사업', ipin: '1111-7777', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_22', name: '손예진', org: '중구보건소', group: '유지보수 담당자', accountType: '조직', dormant: false, business: '군의경 금연사업', ipin: '1111-8888', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_23', name: '송혜교', org: '마포구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '9018-9012', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '18', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1981-02-28', position: '상담사', degree: '대졸', major: '보건학', license: '간호사 면허', serviceCareer: '보건소', counselingStart: '2020-09-01', education: '기본', phone: '010-6666-7777', email: 'song.hk@example.com' },
+                { id: 'user_24', name: '현빈', org: '강남구보건소', group: '금연상담사+금연지도원', accountType: '개인', dormant: false, business: '금연치료 건강보험 지원사업', ipin: '9019-0123', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1982-09-25', position: '팀원', degree: '대학원석사졸', major: '상담학', license: '상담심리사 1급', serviceCareer: '병의원', counselingStart: '2023-01-20', education: '기타(이수증 업로드)', phone: '010-8888-9999', email: 'hyun.b@example.com' },
+                { id: 'user_25', name: '김소현', org: '용산구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '금연상담전화', ipin: '9020-1234', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '48', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1999-06-04', position: '상담사', degree: '대졸', major: '심리학', license: '국가전문자격', serviceCareer: '상담전화', counselingStart: '2019-05-01', education: '심화', phone: '010-1234-9876', email: 'kim.sh@example.com' },
+                { id: 'user_26', name: '남주혁', org: '성동구보건소', group: '금연지도원', accountType: '개인', dormant: false, business: '담배마케팅 모니터링', ipin: '9021-2345', employment: '선택', job: '선택', gender: '선택', careerType: '선택', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '' },
+                { id: 'user_27', name: '이종석', org: '강서구보건소', group: '금연상담사', accountType: '조직', dormant: false, business: '군의경 금연사업', ipin: '9022-3456', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '24', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1989-09-14', position: '주무관', degree: '대학원석사졸', major: '보건학', license: '보건관리사', serviceCareer: '군의경', counselingStart: '2020-11-01', education: '기본', phone: '010-4321-8765', email: 'lee.js@example.com' },
+                { id: 'user_28', name: '박보검', org: '노원구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '찾아가는 금연서비스', ipin: '9023-4567', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1993-01-20', position: '상담사', degree: '대졸', major: '교육학', license: '교사 자격증', serviceCareer: '찾금', counselingStart: '2024-03-01', education: '기본', phone: '010-5555-4444', email: 'park.bg@example.com' },
+                { id: 'user_29', name: '윤아', org: '동작구보건소', group: '금연상담사+금연지도원', accountType: '개인', dormant: false, business: '단기금연캠프', ipin: '9024-5678', employment: '선택', job: '선택', gender: '선택', careerType: '경력', career: '30', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1990-05-30', position: '팀원', degree: '대졸', major: '간호학', license: '간호사 면허', serviceCareer: '금연캠프', counselingStart: '2021-02-15', education: '심화', phone: '010-3210-9876', email: 'yoona@example.com' },
+                { id: 'user_30', name: '김우빈', org: '서초구보건소', group: '금연상담사', accountType: '개인', dormant: false, business: '보건소 금연클리닉', ipin: '9025-6789', employment: '선택', job: '선택', gender: '선택', careerType: '신규', career: '0', continuous: '선택', terms: '미동의', status: '선택', reason: '', start: '', end: '', dob: '1989-07-16', position: '상담사', degree: '대졸', major: '의학', license: '의사면허', serviceCareer: '보건소', counselingStart: '2024-05-10', education: '기본', phone: '010-1111-0000', email: 'kim.wb@example.com' }
+            ];
+
+            // 팝업 로직
+            if (localStorage.getItem(storageKey) !== 'false') {
+                modal.style.display = 'flex';
+            } else {
+                modal.style.display = 'none';
+            }
+
+            closeModalBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+                if (doNotShowAgainCheckbox.checked) {
+                    localStorage.setItem(storageKey, 'false');
+                }
+            });
+
+            // 기능 구현 함수
+            function renderUserList(users) {
+                // 기존 리스트 초기화 (헤더 제외)
+                const existingRows = userListGrid.querySelectorAll('.user-row');
+                existingRows.forEach(row => row.remove());
+
+                users.forEach(user => {
+                    const row = document.createElement('div');
+                    row.className = 'user-row grid grid-cols-4 text-xs p-2 border-b border-gray-100';
+                    row.dataset.userId = user.id;
+
+                    row.innerHTML = `
+                        <div>${user.id}</div>
+                        <div>${user.name}</div>
+                        <div>${user.org}</div>
+                        <div>${user.group}</div>
+                    `;
+                    userListGrid.appendChild(row);
+
+                    // 리스트 항목 클릭 시 상세 정보 표시
+                    row.addEventListener('click', () => {
+                        // 모든 행의 선택 효과를 제거
+                        document.querySelectorAll('.user-row').forEach(r => r.classList.remove('selected'));
+                        // 클릭한 행에 선택 효과 추가
+                        row.classList.add('selected');
+                        displayUserDetails(user);
+                    });
+                });
+            }
+
+            function displayUserDetails(user) {
+                // 사용자 상세 정보 필드에 데이터 채우기
+                detailUserIdInput.value = user.id;
+                detailUserNameInput.value = user.name;
+                accountTypeSelect.value = user.accountType || '선택';
+                businessDivisionSelect.value = user.business || '선택';
+                ipinIdInput.value = user.ipin || '';
+                orgNameInput.value = user.org || '';
+                employmentTypeSelect.value = user.employment || '선택';
+                userGroupSelect.value = user.group || '선택';
+                jobTitleSelect.value = user.job || '선택';
+                genderSelect.value = user.gender || '선택';
+                careerTypeSelect.value = user.careerType || '선택';
+                careerInput.value = user.career || '';
+                continuousEmploymentSelect.value = user.continuous || '선택';
+                termsAgreementSelect.value = user.terms || '미동의';
+                usageStatusSelect.value = user.status || '선택';
+                reasonInput.value = user.reason || '';
+                startDateInput.value = user.start || '';
+                endDateInput.value = user.end || '';
+                
+                // '사용자(금연상담사) 추가정보' 영역 표시/숨기기
+                if (user.group === '금연상담사' || user.group === '금연상담사+금연지도원') {
+                    additionalInfoSection.classList.remove('hidden-section');
+                    // 추가 정보 필드에 데이터 채우기
+                    dobInput.value = user.dob || '';
+                    positionInput.value = user.position || '';
+                    finalDegreeSelect.value = user.degree || '선택';
+                    majorFieldSelect.value = user.major || '선택';
+                    counselingLicenseInput.value = user.license || '';
+                    serviceCareerSelect.value = user.serviceCareer || '선택';
+                    counselingStartDateInput.value = user.counselingStart || '';
+                    educationSelect.value = user.education || '선택';
+                    phoneInput.value = user.phone || '';
+                    emailInput.value = user.email || '';
+                    
+                    // 교육 이수 여부가 '기타'인 경우 파일 업로드 영역 표시
+                    if (user.education === '기타(이수증 업로드)') {
+                        fileUploadContainer.classList.remove('hidden-section');
+                    } else {
+                        fileUploadContainer.classList.add('hidden-section');
+                    }
+                } else {
+                    additionalInfoSection.classList.add('hidden-section');
+                }
+            }
+
+            function clearUserDetails() {
+                // 모든 상세 정보 필드를 초기 값으로 초기화
+                detailUserIdInput.value = '';
+                detailUserNameInput.value = '';
+                accountTypeSelect.value = '선택';
+                businessDivisionSelect.value = '선택';
+                ipinIdInput.value = '';
+                orgNameInput.value = '';
+                employmentTypeSelect.value = '선택';
+                userGroupSelect.value = '선택';
+                jobTitleSelect.value = '선택';
+                genderSelect.value = '선택';
+                careerTypeSelect.value = '선택';
+                careerInput.value = '';
+                continuousEmploymentSelect.value = '선택';
+                termsAgreementSelect.value = '미동의';
+                usageStatusSelect.value = '선택';
+                reasonInput.value = '';
+                startDateInput.value = '';
+                endDateInput.value = '';
+
+                // 추가 정보 필드 초기화
+                dobInput.value = '';
+                positionInput.value = '';
+                finalDegreeSelect.value = '선택';
+                majorFieldSelect.value = '선택';
+                counselingLicenseInput.value = '';
+                serviceCareerSelect.value = '선택';
+                counselingStartDateInput.value = '';
+                educationSelect.value = '선택';
+                phoneInput.value = '';
+                emailInput.value = '';
+                
+                // 추가 정보 섹션 숨기기
+                additionalInfoSection.classList.add('hidden-section');
+                fileUploadContainer.classList.add('hidden-section');
+
+                // 리스트의 선택 효과 제거
+                document.querySelectorAll('.user-row').forEach(row => row.classList.remove('selected'));
+            }
+
+            // '조회' 버튼 클릭 이벤트 리스너
+            searchBtn.addEventListener('click', () => {
+                const userName = userNameInput.value.trim().toLowerCase();
+                const userGroup = userGroupFilterSelect.value;
+                let filteredUsers = testUsers;
+
+                // 사용자명 필터링
+                if (userName !== '') {
+                    filteredUsers = filteredUsers.filter(user => user.name.toLowerCase().includes(userName));
+                }
+
+                // 사용자 그룹 필터링
+                if (userGroup !== '전체') {
+                    filteredUsers = filteredUsers.filter(user => user.group === userGroup);
+                }
+
+                renderUserList(filteredUsers);
+                // 필터링 후 첫 번째 사용자 선택 (선택 사항)
+                if (filteredUsers.length > 0) {
+                    displayUserDetails(filteredUsers[0]);
+                    userListGrid.querySelector('.user-row').classList.add('selected');
+                } else {
+                    // 리스트가 비어있을 경우 상세 정보 초기화
+                    clearUserDetails();
+                }
+            });
+            
+            // '신규' 버튼 클릭 이벤트 리스너
+            newBtn.addEventListener('click', () => {
+                clearUserDetails();
+            });
+
+            // 사용자그룹 상세 정보 콤보박스 변경 이벤트 (추가 정보 영역 표시/숨기기)
+            userGroupSelect.addEventListener('change', (e) => {
+                const selectedValue = e.target.value;
+                if (selectedValue === '금연상담사' || selectedValue === '금연상담사+금연지도원') {
+                    additionalInfoSection.classList.remove('hidden-section');
+                } else {
+                    additionalInfoSection.classList.add('hidden-section');
+                }
+            });
+
+            // 교육 이수 여부 콤보박스 변경 이벤트 (파일 업로드 영역 표시/숨기기)
+            educationSelect.addEventListener('change', (e) => {
+                if (e.target.value === '기타(이수증 업로드)') {
+                    fileUploadContainer.classList.remove('hidden-section');
+                } else {
+                    fileUploadContainer.classList.add('hidden-section');
+                }
+            });
+            
+            // 페이지 로드 시 초기 데이터 렌더링
+            renderUserList(testUsers);
+            if (testUsers.length > 0) {
+                displayUserDetails(testUsers[0]);
+                userListGrid.querySelector('.user-row').classList.add('selected');
+            }
+            
+            // Firebase Firestore와 연동하여 검토 의견을 관리하는 함수
+            function initCommentsFeature() {
+                if (!db || !auth) {
+                    console.error("Firestore is not initialized.");
+                    return;
+                }
+
+                const commentsCollectionRef = collection(db, `artifacts/${appId}/public/data/comments`);
+
+                // '추가' 버튼 클릭 이벤트 리스너
+                addCommentBtn.addEventListener('click', async () => {
+                    const commentText = commentInput.value.trim();
+                    if (commentText) {
+                        try {
+                            // Firestore에 새 문서 추가
+                            await addDoc(commentsCollectionRef, {
+                                text: commentText,
+                                timestamp: Date.now()
+                            });
+                            commentInput.value = ''; // 입력창 초기화
+                        } catch (e) {
+                            console.error("Error adding document: ", e);
+                        }
+                    }
+                });
+
+                // 실시간으로 Firestore 데이터 변화를 감지하고 화면을 업데이트
+                onSnapshot(commentsCollectionRef, (snapshot) => {
+                    commentList.innerHTML = ''; // 댓글 목록 초기화
+                    const comments = [];
+                    snapshot.forEach((doc) => {
+                        // 문서 ID와 데이터를 함께 저장
+                        comments.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // 최신 댓글이 위에 오도록 정렬
+                    comments.sort((a, b) => b.timestamp - a.timestamp);
+                    
+                    // 정렬된 댓글을 화면에 렌더링
+                    comments.forEach(comment => {
+                        const commentElement = createCommentElement(comment);
+                        commentList.appendChild(commentElement);
+                    });
+                });
+
+                // 댓글 HTML 요소 생성
+                function createCommentElement(comment) {
+                    const commentDiv = document.createElement('div');
+                    commentDiv.className = 'comment-item text-sm text-gray-700';
+                    commentDiv.innerHTML = `
+                        <span>${comment.text}</span>
+                        <button class="delete-btn" data-id="${comment.id}">삭제</button>
+                    `;
+                    return commentDiv;
+                }
+
+                // '삭제' 버튼 클릭 이벤트 (이벤트 위임)
+                commentList.addEventListener('click', async (e) => {
+                    if (e.target.classList.contains('delete-btn')) {
+                        const commentId = e.target.dataset.id;
+                        try {
+                            // Firestore에서 문서 삭제
+                            const commentDocRef = doc(db, `artifacts/${appId}/public/data/comments`, commentId);
+                            await deleteDoc(commentDocRef);
+                        } catch (e) {
+                            console.error("Error removing document: ", e);
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
