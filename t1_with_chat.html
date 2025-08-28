@@ -131,22 +131,22 @@
             text-align: center;
         }
 
-        /* 검토의견 섹션 스타일 */
-        .review-section {
+        /* 검토의견 및 채팅 섹션 스타일 */
+        .review-section, .chat-section {
             border: 1px solid #d1d5db;
             border-radius: 0.5rem;
             padding: 1rem;
             background-color: white;
             margin-top: 1rem;
         }
-        .comment-item {
+        .comment-item, .chat-message-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0.5rem;
             border-bottom: 1px solid #e5e7eb;
         }
-        .comment-item:last-child {
+        .comment-item:last-child, .chat-message-item:last-child {
             border-bottom: none;
         }
         .delete-btn {
@@ -159,6 +159,11 @@
         }
         .delete-btn:hover {
             background-color: #dc2626;
+        }
+        .chat-user-id {
+            font-weight: 600;
+            color: #4f46e5; /* Indigo color for user ID */
+            margin-right: 0.5rem;
         }
     </style>
     <!-- Firebase SDK를 추가합니다. -->
@@ -275,7 +280,23 @@
                     </div>
                     <!-- 데이터가 동적으로 추가될 영역 -->
                 </div>
-                <!-- 검토의견 입력 영역 추가 -->
+
+                <!-- 실시간 채팅 영역 추가 -->
+                <div class="chat-section mt-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-lg">실시간 채팅</span>
+                        <span class="text-xs text-gray-500">현재 접속자: <span id="currentUserIdDisplay">익명</span></span>
+                    </div>
+                    <div id="chatMessages" class="bg-gray-50 p-2 border border-gray-200 rounded-md overflow-y-auto text-sm mb-2" style="height: 120px;">
+                        <!-- 채팅 메시지가 여기에 동적으로 추가됩니다 -->
+                    </div>
+                    <div class="flex space-x-2">
+                        <textarea id="chatInput" class="form-input flex-grow" rows="2" placeholder="채팅 메시지를 입력하세요..."></textarea>
+                        <button id="sendChatBtn" class="btn btn-blue flex-shrink-0">전송</button>
+                    </div>
+                </div>
+
+                <!-- 검토의견 입력 영역 -->
                 <div class="review-section mt-4">
                     <div class="flex items-center justify-between mb-2">
                         <span class="font-bold text-lg">검토의견 입력</span>
@@ -587,16 +608,19 @@
                 if (user) {
                     userId = user.uid;
                     console.log("Firebase 인증 성공. User ID:", userId);
+                    document.getElementById('currentUserIdDisplay').textContent = userId; // 현재 사용자 ID 표시
                 } else {
                     console.log("Firebase 인증 실패 또는 로그아웃. 익명으로 로그인.");
                     userId = 'anonymous'; // 익명 로그인 실패 시 anonymous로 유지
+                    document.getElementById('currentUserIdDisplay').textContent = '익명'; // 현재 사용자 ID 표시
                 }
-                // Firebase 초기화 및 인증이 완료된 후 검토 의견 기능 시작
+                // Firebase 초기화 및 인증이 완료된 후 검토 의견 및 채팅 기능 시작
                 // 이 함수는 'db'와 'auth' 객체가 유효할 때만 호출됩니다.
                 if (db && auth) {
                     initCommentsFeature();
+                    initChatFeature(); // 채팅 기능 초기화 호출
                 } else {
-                    console.error("Firebase Firestore 또는 Auth가 초기화되지 않아 검토 의견 기능을 시작할 수 없습니다.");
+                    console.error("Firebase Firestore 또는 Auth가 초기화되지 않아 검토 의견 및 채팅 기능을 시작할 수 없습니다.");
                 }
             });
 
@@ -649,6 +673,11 @@
             const addCommentBtn = document.getElementById('addCommentBtn');
             const commentInput = document.getElementById('commentInput');
             const commentList = document.getElementById('commentList');
+
+            // 채팅 관련 요소
+            const chatInput = document.getElementById('chatInput');
+            const sendChatBtn = document.getElementById('sendChatBtn');
+            const chatMessages = document.getElementById('chatMessages');
 
             // 가상 테스트 데이터
             const testUsers = [
@@ -878,12 +907,10 @@
             function initCommentsFeature() {
                 if (!db || !auth) {
                     console.error("Firestore가 초기화되지 않았습니다. Firebase 설정이 올바른지 확인하세요.");
-                    // 사용자에게 Firebase 설정 오류를 알리는 모달 또는 메시지 표시
                     return;
                 }
 
                 // 댓글 컬렉션 경로: artifacts/{appId}/public/data/comments
-                // 여기서 appId는 firebaseConfig.projectId를 사용합니다.
                 const commentsCollectionRef = collection(db, `artifacts/${appId}/public/data/comments`);
 
                 // '추가' 버튼 클릭 이벤트 리스너
@@ -891,39 +918,34 @@
                     const commentText = commentInput.value.trim();
                     if (commentText) {
                         try {
-                            // Firestore에 새 문서 추가
                             await addDoc(commentsCollectionRef, {
                                 text: commentText,
-                                timestamp: Date.now()
+                                timestamp: Date.now(),
+                                authorId: userId // 작성자 ID 추가
                             });
-                            commentInput.value = ''; // 입력창 초기화
+                            commentInput.value = '';
                         } catch (e) {
                             console.error("문서 추가 오류: ", e);
-                            // 사용자에게 추가 실패 메시지 표시
                         }
                     }
                 });
 
                 // 실시간으로 Firestore 데이터 변화를 감지하고 화면을 업데이트
                 onSnapshot(commentsCollectionRef, (snapshot) => {
-                    commentList.innerHTML = ''; // 댓글 목록 초기화
+                    commentList.innerHTML = '';
                     const comments = [];
                     snapshot.forEach((doc) => {
-                        // 문서 ID와 데이터를 함께 저장
                         comments.push({ id: doc.id, ...doc.data() });
                     });
                     
-                    // 최신 댓글이 위에 오도록 정렬
                     comments.sort((a, b) => b.timestamp - a.timestamp);
                     
-                    // 정렬된 댓글을 화면에 렌더링
                     comments.forEach(comment => {
                         const commentElement = createCommentElement(comment);
                         commentList.appendChild(commentElement);
                     });
                 }, (error) => {
                     console.error("Firestore 스냅샷 오류: ", error);
-                    // 사용자에게 실시간 업데이트 오류를 알리는 메시지 표시
                 });
 
                 // 댓글 HTML 요소 생성
@@ -931,7 +953,10 @@
                     const commentDiv = document.createElement('div');
                     commentDiv.className = 'comment-item text-sm text-gray-700';
                     commentDiv.innerHTML = `
-                        <span>${comment.text}</span>
+                        <div>
+                            <span class="font-semibold text-gray-800">${comment.authorId.substring(0, 8)}...:</span> <!-- 사용자 ID 축약 표시 -->
+                            <span>${comment.text}</span>
+                        </div>
                         <button class="delete-btn" data-id="${comment.id}">삭제</button>
                     `;
                     return commentDiv;
@@ -942,15 +967,85 @@
                     if (e.target.classList.contains('delete-btn')) {
                         const commentId = e.target.dataset.id;
                         try {
-                            // Firestore에서 문서 삭제
                             const commentDocRef = doc(db, `artifacts/${appId}/public/data/comments`, commentId);
                             await deleteDoc(commentDocRef);
                         } catch (e) {
                             console.error("문서 삭제 오류: ", e);
-                            // 사용자에게 삭제 실패 메시지 표시
                         }
                     }
                 });
+            }
+
+            // Firebase Firestore와 연동하여 채팅 메시지를 관리하는 함수
+            function initChatFeature() {
+                if (!db || !auth) {
+                    console.error("Firestore가 초기화되지 않았습니다. 채팅 기능을 시작할 수 없습니다.");
+                    return;
+                }
+
+                // 채팅 메시지 컬렉션 경로: artifacts/{appId}/public/data/chat_messages
+                const chatMessagesCollectionRef = collection(db, `artifacts/${appId}/public/data/chat_messages`);
+
+                // '전송' 버튼 클릭 이벤트 리스너
+                sendChatBtn.addEventListener('click', async () => {
+                    const messageText = chatInput.value.trim();
+                    if (messageText) {
+                        try {
+                            await addDoc(chatMessagesCollectionRef, {
+                                text: messageText,
+                                timestamp: Date.now(),
+                                authorId: userId // 작성자 ID 추가
+                            });
+                            chatInput.value = ''; // 입력창 초기화
+                        } catch (e) {
+                            console.error("채팅 메시지 추가 오류: ", e);
+                        }
+                    }
+                });
+
+                // Enter 키 입력 시 메시지 전송
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) { // Shift+Enter는 줄 바꿈 허용
+                        e.preventDefault(); // 기본 Enter 동작(줄 바꿈) 방지
+                        sendChatBtn.click(); // 전송 버튼 클릭
+                    }
+                });
+
+                // 실시간으로 Firestore 채팅 데이터 변화를 감지하고 화면을 업데이트
+                onSnapshot(chatMessagesCollectionRef, (snapshot) => {
+                    chatMessages.innerHTML = ''; // 채팅 메시지 목록 초기화
+                    const messages = [];
+                    snapshot.forEach((doc) => {
+                        messages.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // 오래된 메시지가 위에 오도록 오름차순 정렬
+                    messages.sort((a, b) => a.timestamp - b.timestamp);
+                    
+                    messages.forEach(message => {
+                        const messageElement = createChatMessageElement(message);
+                        chatMessages.appendChild(messageElement);
+                    });
+                    // 새 메시지 추가 시 스크롤을 맨 아래로 이동
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, (error) => {
+                    console.error("Firestore 채팅 스냅샷 오류: ", error);
+                });
+
+                // 채팅 메시지 HTML 요소 생성
+                function createChatMessageElement(message) {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'chat-message-item';
+                    const formattedTime = new Date(message.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+                    messageDiv.innerHTML = `
+                        <div>
+                            <span class="chat-user-id" title="${message.authorId}">${message.authorId.substring(0, 8)}...</span>
+                            <span>${message.text}</span>
+                            <span class="text-gray-400 text-xs ml-2">${formattedTime}</span>
+                        </div>
+                    `;
+                    return messageDiv;
+                }
             }
         });
     </script>
