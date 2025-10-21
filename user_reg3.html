@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -168,13 +169,14 @@
       text-align: center;
       font-size: 0.9em;
     }
+    
+    .file-table th:first-child,
+    .file-table td:first-child {
+        width: 40px;
+    }
 
     .file-table th {
       background-color: #e8e8e8;
-    }
-
-    .file-table tbody tr:first-child td {
-      background-color: #e6e6fa; /* Lavender */
     }
     
     #major-other-row {
@@ -249,7 +251,7 @@
           
           <!-- Conditional Row for Other Major -->
           <div id="major-other-row" style="display: none;">
-            <label class="grid-item-label">전공분야(기타)</label>
+            <label class="grid-item-label">전공분야(기타)<span class="required">*</span></label>
             <div class="grid-item-field grid-span-3">
               <input type="text" id="major-other-input" placeholder="전공분야 입력" />
             </div>
@@ -299,6 +301,7 @@
           <div class="grid-item-field grid-span-3 checkbox-group" id="education-group">
             <label><input type="checkbox" name="education"> 기초과정</label>
             <label><input type="checkbox" name="education"> 기본과정</label>
+            <label><input type="checkbox" name="education"> 보수과정</label>
             <label><input type="checkbox" name="education"> 심화과정</label>
             <label><input type="checkbox" name="education"> 기타</label>
             <label><input type="checkbox" name="education" id="edu-none"> 해당없음</label>
@@ -309,13 +312,15 @@
             <table class="file-table">
                 <thead>
                     <tr>
+                        <th><input type="checkbox" id="select-all-files" title="Select All"></th>
                         <th>파일명</th>
                         <th>크기(KB)</th>
                         <th>확장자</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="file-list-body">
                     <tr>
+                        <td><input type="checkbox" name="file-select"></td>
                         <td>이수증 테스트.pdf</td>
                         <td>75,934</td>
                         <td>pdf</td>
@@ -323,7 +328,7 @@
                 </tbody>
             </table>
             <div class="delete-button-container">
-                <button class="delete-button">삭제</button>
+                <button class="delete-button" id="delete-selected-files-btn">삭제</button>
             </div>
         </div>
       </div>
@@ -408,6 +413,77 @@
                 eduNoneCheckbox.checked = false;
               }
           }
+      });
+
+      // --- FILE UPLOAD AND DELETE LOGIC ---
+      const fileUploadInput = document.createElement('input');
+      fileUploadInput.type = 'file';
+      fileUploadInput.multiple = true;
+      fileUploadInput.hidden = true;
+      fileUploadInput.accept = ".pdf,.jpg,.jpeg,.png,.hwp,.doc,.docx";
+      document.body.appendChild(fileUploadInput);
+
+      const fileListBody = document.getElementById('file-list-body');
+      const deleteSelectedBtn = document.getElementById('delete-selected-files-btn');
+      const selectAllCheckbox = document.getElementById('select-all-files');
+
+      // Trigger hidden file input when "Upload" button is clicked
+      uploadBtn.addEventListener('click', (e) => {
+          e.preventDefault(); // Prevent form submission if it's part of a form
+          fileUploadInput.click();
+      });
+
+      // Handle file selection
+      fileUploadInput.addEventListener('change', (event) => {
+          const files = event.target.files;
+          if (files.length === 0) return;
+
+          for (const file of files) {
+              const row = document.createElement('tr');
+
+              const checkboxCell = document.createElement('td');
+              const checkbox = document.createElement('input');
+              checkbox.type = 'checkbox';
+              checkbox.name = 'file-select';
+              checkboxCell.appendChild(checkbox);
+
+              const nameCell = document.createElement('td');
+              nameCell.textContent = file.name;
+
+              const sizeCell = document.createElement('td');
+              sizeCell.textContent = (file.size / 1024).toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+              const extCell = document.createElement('td');
+              const nameParts = file.name.split('.');
+              extCell.textContent = nameParts.length > 1 ? nameParts.pop().toLowerCase() : '';
+
+              row.appendChild(checkboxCell);
+              row.appendChild(nameCell);
+              row.appendChild(sizeCell);
+              row.appendChild(extCell);
+
+              fileListBody.appendChild(row);
+          }
+          event.target.value = ''; // Reset for re-uploading same file
+      });
+
+      // Handle delete button click
+      deleteSelectedBtn.addEventListener('click', () => {
+          const selectedCheckboxes = fileListBody.querySelectorAll('input[name="file-select"]:checked');
+          selectedCheckboxes.forEach(cb => {
+              cb.closest('tr').remove();
+          });
+          if (selectedCheckboxes.length > 0) {
+            selectAllCheckbox.checked = false;
+          }
+      });
+
+      // Handle "Select All" checkbox
+      selectAllCheckbox.addEventListener('change', (event) => {
+          const allCheckboxes = fileListBody.querySelectorAll('input[name="file-select"]');
+          allCheckboxes.forEach(cb => {
+              cb.checked = event.target.checked;
+          });
       });
     });
   </script>
