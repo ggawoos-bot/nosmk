@@ -176,6 +176,10 @@
     .file-table tbody tr:first-child td {
       background-color: #e6e6fa; /* Lavender */
     }
+    
+    #major-other-row {
+      display: contents;
+    }
 
     /* Delete button */
     .delete-button-container {
@@ -228,7 +232,7 @@
           </div>
           <label class="grid-item-label">전공분야<span class="required">*</span></label>
           <div class="grid-item-field">
-            <select>
+            <select id="major-select">
               <option>선택</option>
               <option>의학</option>
               <option selected>간호학</option>
@@ -239,8 +243,16 @@
               <option>교육학</option>
               <option>아동학</option>
               <option>청소년학</option>
-              <option>기타</option>
+              <option value="기타">기타</option>
             </select>
+          </div>
+          
+          <!-- Conditional Row for Other Major -->
+          <div id="major-other-row" style="display: none;">
+            <label class="grid-item-label">전공분야(기타)</label>
+            <div class="grid-item-field grid-span-3">
+              <input type="text" id="major-other-input" placeholder="전공분야 입력" />
+            </div>
           </div>
 
           <!-- Row 3 -->
@@ -256,8 +268,6 @@
             <label><input type="checkbox" name="experience"> 군의경 금연사업</label>
             <label><input type="checkbox" name="experience"> 단기금연캠프</label>
             <label><input type="checkbox" name="experience"> 찾아가는 금연서비스</label>
-            <label><input type="checkbox" name="experience"> 학교흡연예방사업</label>
-            <label><input type="checkbox" name="experience"> 담배마케팅 모니터링</label>
             <label><input type="checkbox" name="experience"> 금연상담전화</label>
             <label><input type="checkbox" name="experience"> 금연치료 건강보험 지원사업</label>
             <label><input type="checkbox" name="experience" id="exp-none"> 해당없음</label>
@@ -285,9 +295,8 @@
           </div>
           
           <!-- Row 7 -->
-          <label class="grid-item-label">교육 이수 여부<span class="required">*</span></label>
+          <label class="grid-item-label">교육 이수 여부<br>(한국건강증진개발원 표준교육프로그램)<span class="required">*</span></label>
           <div class="grid-item-field grid-span-3 checkbox-group" id="education-group">
-            <label><input type="checkbox" name="education"> 한국건강증진개발원 표준교육프로그램</label>
             <label><input type="checkbox" name="education"> 기초과정</label>
             <label><input type="checkbox" name="education"> 기본과정</label>
             <label><input type="checkbox" name="education"> 보수과정</label>
@@ -323,6 +332,20 @@
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Logic for Major field "Other" input
+      const majorSelect = document.getElementById('major-select');
+      const majorOtherRow = document.getElementById('major-other-row');
+      const majorOtherInput = document.getElementById('major-other-input');
+
+      majorSelect.addEventListener('change', () => {
+          if (majorSelect.value === '기타') {
+              majorOtherRow.style.display = 'contents';
+          } else {
+              majorOtherRow.style.display = 'none';
+              majorOtherInput.value = ''; // Clear value when hidden
+          }
+      });
+
       // Logic for "Other Smoking Cessation Service Counseling Experience"
       const expNoneCheckbox = document.getElementById('exp-none');
       const experienceGroup = document.getElementById('experience-group');
